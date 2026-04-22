@@ -108,33 +108,22 @@
         let markers = {};
         let pendingCoords = null;
 
-        // Cookie functies voor opslag
-        function setCookie(name, value, days) {
-            let expires = "";
-            if (days) {
-                let date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = "; expires=" + date.toUTCString();
-            }
-            // Gebruik JSON stringify om objecten op te slaan
-            document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + expires + "; path=/";
+        // localStorage functies voor betrouwbare opslag op eigen domein
+        function saveData() {
+            localStorage.setItem('speurtocht_data_v2', JSON.stringify(locations));
+            render();
         }
 
-        function getCookie(name) {
-            let nameEQ = name + "=";
-            let ca = document.cookie.split(';');
-            for(let i=0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0)==' ') c = c.substring(1,c.length);
-                if (c.indexOf(nameEQ) == 0) {
-                    try {
-                        return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
-                    } catch(e) {
-                        return null;
-                    }
+        function loadData() {
+            const saved = localStorage.getItem('speurtocht_data_v2');
+            if (saved) {
+                try {
+                    locations = JSON.parse(saved);
+                } catch(e) {
+                    console.error("Fout bij laden data:", e);
+                    locations = [];
                 }
             }
-            return null;
         }
 
         function initMap() {
@@ -143,7 +132,6 @@
                 clickTolerance: 15
             }).setView([51.968, 4.615], 14);
 
-            // Gebruik robuuste kaartlaag
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; CARTO'
             }).addTo(map);
@@ -205,16 +193,6 @@
         document.getElementById('locationNameInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') confirmAddLocation();
         });
-
-        function saveData() {
-            setCookie('speurtocht_data', locations, 30); // Bewaar 30 dagen
-            render();
-        }
-
-        function loadData() {
-            const saved = getCookie('speurtocht_data');
-            if (saved) locations = saved;
-        }
 
         function toggleFound(id) {
             const loc = locations.find(l => l.id === id);
